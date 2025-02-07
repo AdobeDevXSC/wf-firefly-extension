@@ -1,0 +1,12 @@
+{
+  "name": "create-firefly",
+  "id": "create-firefly",
+  "description": "Create Firefly",
+  "version": "0.0.1",
+  "mainMenuItems": [
+    {
+      "label": "Create Asset",
+      "id": "create-asset"
+    }
+  ]
+}
