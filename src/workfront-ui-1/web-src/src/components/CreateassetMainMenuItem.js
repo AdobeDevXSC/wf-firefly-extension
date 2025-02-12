@@ -23,9 +23,10 @@ import React, { useState, useEffect } from 'react';
 import { ffIcon } from './icons';
 import { extensionId } from "./Constants";
 import ImageAdd from '@spectrum-icons/workflow/ImageAdd';
+import { useParams } from 'react-router';
 
 //677c3518002739ccd531388bfe1b56cd
-const CreateassetMainMenuItem = () => {
+const CreateassetMainMenuItem = (props) => {
     const [guestConnection, setGuestConnection] = useState();
     const [prompt, setPrompt] = useState();
     const [image, setImage] = useState();
@@ -35,8 +36,9 @@ const CreateassetMainMenuItem = () => {
     const [fireFlyImg, setFireFlyImg] = useState();
     const [buttonEnabled, setButtonEnabled] = useState(true);
 
+    const { objCode, objID } = useParams();
+
     useEffect(() => {
-        console.log(prompt?.length);
         if (image && mask && prompt?.length > 0) {
             console.log('hello');
             setButtonEnabled(false);
@@ -44,9 +46,23 @@ const CreateassetMainMenuItem = () => {
 
         (async () => {
             const guestConnection = await attach({ id: extensionId });
+            console.log(guestConnection);
             setGuestConnection(guestConnection);
         })();
     }, [image, mask, prompt]);
+
+    useEffect(() => {
+        if (guestConnection) {
+            const context = guestConnection?.sharedContext;
+            const auth = context?.get("auth");
+            const objCode = context?.get("objCode");
+            const hostname = context?.get("hostname");
+            const objID = context?.get("objID");
+            const protocol = context?.get("protocol");
+            const userInfo = context?.get("user");
+            console.log(context);
+        }
+    }, [guestConnection]);
 
     const fireFly = async (evt, guestConnection) => {
         console.log(evt);
@@ -55,7 +71,7 @@ const CreateassetMainMenuItem = () => {
 
         const action = 'ext2/create';
         const params = {
-            apiEndpoint: 'https://hook.app.workfrontfusion.com/fuku77jl4temenfexaqm1d67a8rqek5j',
+            apiEndpoint: 'https://hook.app.workfrontfusion.com/ccv53plfsxl346v59jc97uiwk365n1cu',
             prompt: prompt,
             image: image,
             mask: mask
@@ -76,13 +92,13 @@ const CreateassetMainMenuItem = () => {
 
     const setSubmit = async (evt) => {
 
-        const url = 'https://hook.app.workfrontfusion.com/fuku77jl4temenfexaqm1d67a8rqek5j';
+        const url = 'https://hook.app.workfrontfusion.com/ccv53plfsxl346v59jc97uiwk365n1cu';
         evt.preventDefault();
         const formData = new FormData();
         formData.append('prompt', prompt);
         formData.append('imgMask', mask);
         formData.append('orgImg', image);
-        formData.append('projectid', '677c3518002739ccd531388bfe1b56cd');
+        formData.append(objCode, objID);
 
         const res = await fetch(url, {
             method: 'POST',
@@ -114,9 +130,9 @@ const CreateassetMainMenuItem = () => {
                         </View>
                     </Flex>
                     <Form maxWidth="size-4000" method='post' onSubmit={(e) => { setSubmit(e) }} encType='multipart/form-data' action='#'>
-               
+
                         <TextArea label='Image Prompt' labelPosition={'top'} onChange={(e) => { setPrompt(e) }}></TextArea>
-                        
+
                         <Flex direction="column" marginTop={"30px"} alignContent={"left"} backgroundColor={'red'}>
 
                             <View>
@@ -169,10 +185,10 @@ const CreateassetMainMenuItem = () => {
                             <Well>{mask?.name || 'No file selected'}</Well>
                         </IllustratedMessage>)}</View>
 
-                        <View>{maskLocal && (<IllustratedMessage>
+                        <View>{fireFlyImg && (<IllustratedMessage>
                             <Heading marginBottom={'size-100'}>Firefly Image</Heading>
-                            <Image width={"300px"} objectFit="cover" src={maskLocal}></Image>
-                            <Well>{mask?.name || 'No file selected'}</Well>
+                            <Image width={"300px"} objectFit="cover" src={fireFlyImg}></Image>
+                            <Well>{fireFlyImg?.name || 'No file selected'}</Well>
                         </IllustratedMessage>)}</View>
                     </Flex>
 
