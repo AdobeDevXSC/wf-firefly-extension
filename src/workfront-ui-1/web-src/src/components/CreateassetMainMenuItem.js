@@ -14,7 +14,8 @@ import {
     Well,
     IllustratedMessage,
     Divider,
-    TextArea
+    TextArea,
+    ButtonGroup
 } from '@adobe/react-spectrum';
 import { attach } from "@adobe/uix-guest";
 import actionWebInvoke from '../utils';
@@ -24,9 +25,11 @@ import { ffIcon } from './icons';
 import { extensionId } from "./Constants";
 import ImageAdd from '@spectrum-icons/workflow/ImageAdd';
 import { useParams } from 'react-router';
+import { fusionEndpoint } from './Constants';
+import Download from '@spectrum-icons/workflow/Download';
 
 //677c3518002739ccd531388bfe1b56cd
-const CreateassetMainMenuItem = (props) => {
+const CreateassetMainMenuItem = () => {
     const [guestConnection, setGuestConnection] = useState();
     const [prompt, setPrompt] = useState();
     const [image, setImage] = useState();
@@ -35,18 +38,32 @@ const CreateassetMainMenuItem = (props) => {
     const [maskLocal, setMaskLocal] = useState();
     const [fireFlyImg, setFireFlyImg] = useState();
     const [buttonEnabled, setButtonEnabled] = useState(true);
-
-    const { objCode, objID } = useParams();
+    const [auth, setAuth] = useState({});
+    const { objCode, objID } = useState();
+    console.log(objCode);
 
     useEffect(() => {
         if (image && mask && prompt?.length > 0) {
-            console.log('hello');
             setButtonEnabled(false);
         }
 
         (async () => {
             const guestConnection = await attach({ id: extensionId });
-            console.log(guestConnection);
+            console.log(":rocket: ~ file: CreateassetMainMenuItem.js ~ line 89 ~ guestConnection", guestConnection.sharedContext.get("objCode"))
+            console.log(":rocket: ~ file: CreateassetMainMenuItem.js ~ line 89 ~ guestConnection", guestConnection.sharedContext.get("objID"))
+            console.log(":rocket: ~ guestConnection:", guestConnection.sharedContext);
+
+            const context = guestConnection?.sharedContext;
+
+            const auth = context?.get("auth");
+            const objCode = context?.get("objCode");
+            const hostname = context?.get("hostname");
+            const objID = context?.get("objID");
+            const protocol = context?.get("protocol");
+            const userInfo = context?.get("user");
+
+            console.log({ auth, objCode, hostname, objID, protocol, userInfo });
+
             setGuestConnection(guestConnection);
         })();
     }, [image, mask, prompt]);
@@ -54,13 +71,6 @@ const CreateassetMainMenuItem = (props) => {
     useEffect(() => {
         if (guestConnection) {
             const context = guestConnection?.sharedContext;
-            const auth = context?.get("auth");
-            const objCode = context?.get("objCode");
-            const hostname = context?.get("hostname");
-            const objID = context?.get("objID");
-            const protocol = context?.get("protocol");
-            const userInfo = context?.get("user");
-            console.log(context);
         }
     }, [guestConnection]);
 
@@ -71,15 +81,15 @@ const CreateassetMainMenuItem = (props) => {
 
         const action = 'ext2/create';
         const params = {
-            apiEndpoint: 'https://hook.app.workfrontfusion.com/ccv53plfsxl346v59jc97uiwk365n1cu',
+            apiEndpoint: fusionEndpoint,
             prompt: prompt,
             image: image,
             mask: mask
         };
         console.log(params);
         const headers = {
-            'Authorization': 'Bearer ' + guestConnection.sharedContext.get('auth').imsToken,
-            'x-gw-ims-org-id': '637B1EAE6516E2FD0A495FD4@AdobeOrg'  //guestConnection.sharedContext.get('auth').imsOrg
+            'Authorization': 'Bearer ' + auth.imsToken,
+            'x-gw-ims-org-id': auth.imsOrgID  //guestConnection.sharedContext.get('auth').imsOrg
         };
         console.log(headers);
         try {
@@ -92,13 +102,14 @@ const CreateassetMainMenuItem = (props) => {
 
     const setSubmit = async (evt) => {
 
-        const url = 'https://hook.app.workfrontfusion.com/ccv53plfsxl346v59jc97uiwk365n1cu';
+        const url = fusionEndpoint;
         evt.preventDefault();
         const formData = new FormData();
         formData.append('prompt', prompt);
         formData.append('imgMask', mask);
         formData.append('orgImg', image);
-        formData.append(objCode, objID);
+        formData.append('objCode', 'task');
+        formData.append('objID', '677c353800273a412d2d64d2e885f5c9');
 
         const res = await fetch(url, {
             method: 'POST',
@@ -108,6 +119,16 @@ const CreateassetMainMenuItem = (props) => {
 
         setFireFlyImg(ff[0]?.web_url);
     };
+
+    const downloadFF = (e) => {
+        const imageURL = fireFlyImg;
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = 'firefly.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     return (
         <Provider theme={darkTheme} colorScheme='light' width={'100%'} margin={'auto'}>
@@ -172,7 +193,7 @@ const CreateassetMainMenuItem = (props) => {
                     </Form>
                 </View>
                 <View gridArea="content" paddingTop={'size-600'}>
-                    <Flex direction={'row'} width={'100%'} backgroundColor='red' justifyContent={'space-evenly'}>
+                    <Flex direction={'row'} width={'100%'} justifyContent={'space-evenly'}>
                         <View>{imageLocal && (<IllustratedMessage>
                             <Heading marginBottom={'size-100'}>Source Image</Heading>
                             <Image width={"300px"} objectFit="cover" src={imageLocal}></Image>
@@ -185,11 +206,19 @@ const CreateassetMainMenuItem = (props) => {
                             <Well>{mask?.name || 'No file selected'}</Well>
                         </IllustratedMessage>)}</View>
 
-                        <View>{fireFlyImg && (<IllustratedMessage>
-                            <Heading marginBottom={'size-100'}>Firefly Image</Heading>
-                            <Image width={"300px"} objectFit="cover" src={fireFlyImg}></Image>
-                            <Well>{fireFlyImg?.name || 'No file selected'}</Well>
-                        </IllustratedMessage>)}</View>
+                        <View alignSelf={'top'}>{fireFlyImg && (<IllustratedMessage>
+                            <Heading marginTop={'0'} marginBottom={'size-100'}>Firefly Image</Heading>
+                            <Image width={"300px"} objectFit="cover" src={fireFlyImg} Download></Image>
+                            {/* <Well>{prompt}</Well> */}
+                            <ButtonGroup marginTop={'18px'} marginBottom={'4px'}>
+                                <Button variant="primary">Create New Proof Task</Button>
+                                <Button variant="secondary" onPress={(e) => downloadFF(e)}>
+                                    <Download />
+                                </Button>
+                            </ButtonGroup>
+                        </IllustratedMessage>)}
+
+                        </View>
                     </Flex>
 
                 </View>

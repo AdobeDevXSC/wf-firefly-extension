@@ -19,7 +19,7 @@ function App() {
           <Route exact path="index.html" element={<ExtensionRegistration />} />  
           {/* @todo YOUR CUSTOM ROUTES SHOULD BE HERE */}          
           <Route
-            exact path="create-asset/:objCode/:objID"
+            exact path="create-asset"
             element={<Createasset />}
           />
         </Routes>
